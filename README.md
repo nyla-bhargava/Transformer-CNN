@@ -122,3 +122,12 @@ git commit -m "Add research-grade README"
 git push origin main
 ````
 
+## Reproducibility
+
+All experiments are controlled via YAML configuration files in `experiments/`.
+
+To reproduce evaluation metrics and plots on TrueOT:
+
+```bash
+python src/reproduce_results.py --config experiments/transformer_cnn.yaml
+
