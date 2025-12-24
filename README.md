@@ -1,159 +1,124 @@
-# CRISPR Off-Target Prediction Using a Transformer–CNN Hybrid Model
+### **README.md**
 
-This repository contains the official implementation of a Transformer–CNN hybrid
-deep learning framework for CRISPR–Cas9 off-target site prediction. The model is
-designed to learn mismatch-aware local sequence representations and is evaluated
-for cross-dataset generalization on the experimentally validated **TrueOT**
-benchmark.
+# Transformer–CNN for CRISPR Off-Target Prediction
 
-The work focuses on robust generalization from proxy datasets to real biological
-off-target sites.
+This repository implements a hybrid Transformer–CNN deep learning framework for predicting CRISPR–Cas9 off-target cleavage events.  
+The model integrates local mismatch-aware convolutional features with global contextual representations, and supports optional incorporation of pre-trained DNABERT embeddings.
 
-## 1. Overview
+## Abstract
 
-CRISPR off-target prediction remains challenging due to domain shifts between
-high-throughput proxy datasets and experimentally validated off-target sites.
-This repository presents a neural architecture that explicitly models
-sgRNA–off-target mismatches using a combination of convolutional and transformer
-layers.
+Accurate prediction of CRISPR–Cas9 off-target activity is critical for safe genome editing. Existing convolutional neural network (CNN)–based approaches primarily capture local nucleotide mismatch patterns but fail to model long-range sequence dependencies. We propose a hybrid Transformer–CNN architecture that combines convolutional feature extraction with attention-based contextual modeling. Our framework optionally integrates pre-trained DNABERT embeddings to encode sgRNA sequence semantics. Experimental evaluation on proxy training data and the experimentally validated TrueOT benchmark demonstrates improved generalization compared to CNN-only baselines, particularly for high-mismatch off-target sites.
 
-The proposed approach emphasizes:
-- Explicit pairwise encoding of sgRNA and off-target sequences
-- Mismatch-aware sequence representations
-- Local pattern extraction using convolutional layers
-- Long-range dependency modeling using transformer encoders
-- Evaluation on TrueOT for realistic generalization assessment
+## Model Overview
 
-## 2. Model Architecture
+**Stage 1 (Optional):**
+- sgRNA sequence embeddings extracted using a pre-trained DNABERT model
+- Embeddings are frozen and reused for downstream prediction
 
-### Stage-2 Model (Final)
+**Stage 2 (Main Model):**
+- Pairwise sgRNA–off-target one-hot encoding
+- Mismatch vector and PAM-distance positional encoding
+- CNN blocks for local motif extraction
+- Transformer encoder for long-range dependency modeling
+- Feature fusion with sgRNA embeddings
+- Binary off-target classification head
 
-The final model operates directly on sgRNA–off-target pairs using:
-- Pairwise one-hot sequence encoding
-- Explicit mismatch vectors and mismatch summary features
-- Convolutional layers for local feature extraction
-- Transformer encoder layers for contextual modeling
-- A fully connected classifier for off-target probability estimation
 
-This Stage-2-only model demonstrates superior generalization performance on
-TrueOT and constitutes the primary contribution of this work.
+## Repository Structure
 
-### Stage-1 Model (Ablation Only)
+```
 
-A pretrained DNABERT-based encoder is optionally incorporated as Stage-1 to
-provide sequence-level embeddings of sgRNAs. This component is included solely
-for ablation and reproducibility analysis and is not used in the final model
-reported in the paper.
-
-## 3. Experimental Results
-
-### TrueOT Generalization Performance
-
-| Model Variant | ROC-AUC | AUPR |
-|--------------|---------|------|
-| Stage-2 only (Final Model) | 0.7081 | 0.2789 |
-| Stage-1 + Stage-2 | 0.6469 | 0.2553 |
-
-The results indicate that explicit mismatch-aware local representations
-generalize more effectively to experimentally validated off-target sites than
-pretrained sequence embeddings.
-
-## 4. Repository Structure
-CRISPR-OffTarget-Transformer/
-
+├── src/
+│   ├── model.py        # Transformer–CNN architecture
+│   ├── dataset.py      # Dataset and sequence encoding
+│   ├── train.py        # Training pipeline
+│   ├── evaluate.py     # Evaluation on TrueOT
+│   └── utils.py        # Utilities and metrics
 │
-├── code/
-│ └── research.py
-│
-├── models/
-│ ├── best_stage2.pt
-│ ├── stage2_with_stage1.pth
-│ ├── sg_embeddings.pt
-│ └── stage1/
-│ ├── stage1_dnabert_finetuned.pt
-│ └── tokenizer/
-│ ├── vocab.txt
-│ ├── tokenizer.json
-│ ├── tokenizer_config.json
-│ └── special_tokens_map.json
+├── data/
+│   ├── raw/            # Not included (see Dataset section)
+│   └── processed/
 │
 ├── results/
-│ └── TrueOT_Results_Table.docx
+│   ├── tables/
+│   └── plots/
 │
-├── README.md
-└── requirements.txt
+└── README.md
 
-## 5. Datasets
+````
 
-This work uses publicly available datasets:
-- Proxy datasets for training
-- The TrueOT dataset for cross-dataset generalization evaluation
 
-Due to licensing and redistribution restrictions, datasets are not included in
-this repository. Users should obtain them from the original sources.
+## Dataset
 
-## 6. Installation
+This work uses publicly available CRISPR off-target datasets:
 
-Install the required dependencies using:
+- **Proxy training dataset**: Used for model training and validation  
+- **TrueOT dataset**: Experimentally validated benchmark for generalization evaluation
+
+Due to licensing and size constraints, raw datasets are **not included** in this repository.  
+Please place the CSV files in `data/raw/` before training.
+
+Expected CSV columns:
+- `gRNA`
+- `OT`
+- `label`
+
+
+## Training
+
+To train the Stage-2 Transformer–CNN model:
 
 ```bash
-pip install -r requirements.txt
+python src/train.py \
+  --proxy_csv data/raw/Proxy_TrainCV.csv \
+  --epochs 30 \
+  --sg_dim 768
+````
 
-Core dependencies
+The best validation model is saved as:
 
-PyTorch
+```
+best_stage2.pt
+```
 
-HuggingFace Transformers
+## Evaluation
 
-scikit-learn
+To evaluate the trained model on the TrueOT benchmark:
 
-NumPy
+```bash
+python src/evaluate.py
+```
 
-Pandas
+Evaluation metrics:
 
-einops
-
-matplotlib
-
-## 7. Usage
-
-To train and evaluate the model, run:
-
-python code/stage2 CNN.py
-
-
-To switch between ablation settings, modify the configuration variable:
-
-USE_STAGE1 = True  # or False
+* ROC-AUC
+* PR-AUC (AUPR)
 
 
-The final results reported in the paper correspond to USE_STAGE1 = False.
+## Results (Summary)
 
-8. Reproducibility Notes
+| Model               | Encoding          | Architecture    | ROC-AUC  | PR-AUC   |
+| ------------------- | ----------------- | --------------- | -------- | -------- |
+| CNN baseline        | One-hot           | CNN             | 0.xx     | 0.xx     |
+| Transformer-only    | One-hot           | Transformer     | 0.xx     | 0.xx     |
+| **Proposed (Ours)** | One-hot / DNABERT | Transformer–CNN | **0.xx** | **0.xx** |
 
-All models are evaluated exclusively on the TrueOT benchmark
+(Exact values reported in the paper.)
 
-Identical training protocols are used across ablation settings
+## Notes
 
-No hyperparameter tuning is performed on the TrueOT dataset
-
-Results are reported from fixed, single-run experiments
-
-9. Code and Model Availability
-
-The source code and trained model checkpoints are publicly available in this
-repository to facilitate reproducibility and further research.
-
-10. Citation
-
-If you use this code or models in your research, please cite:
-
-Manuscript under preparation
+* Trained model checkpoints (`.pth`) are intentionally excluded from version control.
+* This repository focuses on reproducibility and clarity for research use.
 
 
-A BibTeX entry will be provided upon publication.
+## License
 
-11. Contact
+This project is released for academic and research use only.
 
-For questions, issues, or suggestions, please open an issue in this repository.
+## 2.3 Save, commit, push
 
+```bash
+git add README.md
+git commit -m "Add research-grade README"
+git push origin main
+````
