@@ -1,0 +1,12 @@
+{
+  "sequence_length": 23,
+  "encoding": "one_hot",
+  "alphabet": [
+    "A",
+    "C",
+    "G",
+    "T"
+  ],
+  "shape": "4 x 23",
+  "note": "Generated for Transformer\u2013CNN CRISPR off-target prediction"
+}
