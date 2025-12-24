@@ -97,11 +97,10 @@ Evaluation metrics:
 
 ## Results (Summary)
 
-| Model               | Encoding          | Architecture    | ROC-AUC  | PR-AUC   |
-| ------------------- | ----------------- | --------------- | -------- | -------- |
-| CNN baseline        | One-hot           | CNN             | 0.xx     | 0.xx     |
-| Transformer-only    | One-hot           | Transformer     | 0.xx     | 0.xx     |
-| **Proposed (Ours)** | One-hot / DNABERT | Transformer–CNN | **0.xx** | **0.xx** |
+| Model Variant | sgRNA Embedding | ROC-AUC | PR-AUC |
+|--------------|----------------|--------|--------|
+| **Stage-2 only (Transformer–CNN)** | ✗ | **0.7081** | **0.2789** |
+| Stage-1 + Stage-2 | ✓ (DNABERT, frozen) | 0.6469 | 0.2553 |
 
 (Exact values reported in the paper.)
 
@@ -122,3 +121,4 @@ git add README.md
 git commit -m "Add research-grade README"
 git push origin main
 ````
+
