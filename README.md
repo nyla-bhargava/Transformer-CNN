@@ -144,6 +144,16 @@ Evaluation metrics:
 | **Stage-2 only (Transformer–CNN)** | ✗ | **0.7081** | **0.2789** |
 | Stage-1 + Stage-2 | ✓ (DNABERT, frozen) | 0.6469 | 0.2553 |
 
+
+| Model | Architecture | Training Data | ROC-AUC (TrueOT) |
+|------|-------------|--------------|----------------|
+| DeepCRISPR [1] | CNN | Proxy datasets | 0.65 |
+| CRISPR-Net [2] | CNN | Proxy datasets | 0.68 |
+| TrueOT CNN baseline [3] | CNN | Proxy datasets | 0.69 |
+| CNN-only (ours) | CNN | Proxy datasets | X.XX |
+| Transformer-only (ours) | Transformer | Proxy datasets | X.XX |
+| **Transformer–CNN (ours)** | Hybrid | Proxy datasets | **0.7081** |
+
 (Exact values reported in the paper.)
 
 ## Notes
@@ -171,6 +181,7 @@ To reproduce evaluation metrics and plots on TrueOT:
 
 ```bash
 python src/reproduce_results.py --config experiments/transformer_cnn.yaml
+
 
 
 
