@@ -47,7 +47,6 @@ Accurate prediction of CRISPR–Cas9 off-target activity is critical for safe ge
 
 ````
 
-
 ## Dataset
 
 This work uses publicly available CRISPR off-target datasets:
@@ -109,6 +108,7 @@ Evaluation metrics:
 * Trained model checkpoints (`.pth`) are intentionally excluded from version control.
 * This repository focuses on reproducibility and clarity for research use.
 
+<img width="9606" height="5160" alt="diagram" src="https://github.com/user-attachments/assets/e00cdc1d-dcf4-4acf-8346-6f0e9e18dcbf" />
 
 ## License
 
@@ -130,4 +130,5 @@ To reproduce evaluation metrics and plots on TrueOT:
 
 ```bash
 python src/reproduce_results.py --config experiments/transformer_cnn.yaml
+
 
