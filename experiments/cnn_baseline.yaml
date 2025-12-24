@@ -1,0 +1,21 @@
+model:
+  type: cnn
+  input_encoding: one_hot
+  conv_channels: [64, 128, 256]
+  kernel_sizes: [3, 5, 7]
+  dropout: 0.3
+
+training:
+  batch_size: 64
+  epochs: 30
+  learning_rate: 0.0005
+  optimizer: adam
+
+data:
+  train_csv: data/raw/Proxy_TrainCV.csv
+  val_csv: data/raw/Proxy_Val.csv
+  test_csv: data/raw/TrueOT.csv
+
+output:
+  checkpoint_dir: models/cnn_baseline
+  results_dir: results/cnn_baseline
