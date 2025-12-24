@@ -9,8 +9,6 @@ benchmark.
 The work focuses on robust generalization from proxy datasets to real biological
 off-target sites.
 
----
-
 ## 1. Overview
 
 CRISPR off-target prediction remains challenging due to domain shifts between
@@ -25,8 +23,6 @@ The proposed approach emphasizes:
 - Local pattern extraction using convolutional layers
 - Long-range dependency modeling using transformer encoders
 - Evaluation on TrueOT for realistic generalization assessment
-
----
 
 ## 2. Model Architecture
 
@@ -49,8 +45,6 @@ provide sequence-level embeddings of sgRNAs. This component is included solely
 for ablation and reproducibility analysis and is not used in the final model
 reported in the paper.
 
----
-
 ## 3. Experimental Results
 
 ### TrueOT Generalization Performance
@@ -64,10 +58,9 @@ The results indicate that explicit mismatch-aware local representations
 generalize more effectively to experimentally validated off-target sites than
 pretrained sequence embeddings.
 
----
-
 ## 4. Repository Structure
 CRISPR-OffTarget-Transformer/
+
 │
 ├── code/
 │ └── research.py
@@ -90,8 +83,6 @@ CRISPR-OffTarget-Transformer/
 ├── README.md
 └── requirements.txt
 
----
-
 ## 5. Datasets
 
 This work uses publicly available datasets:
@@ -100,8 +91,6 @@ This work uses publicly available datasets:
 
 Due to licensing and redistribution restrictions, datasets are not included in
 this repository. Users should obtain them from the original sources.
-
----
 
 ## 6. Installation
 
@@ -126,7 +115,7 @@ einops
 
 matplotlib
 
-7. Usage
+## 7. Usage
 
 To train and evaluate the model, run:
 
@@ -167,3 +156,4 @@ A BibTeX entry will be provided upon publication.
 11. Contact
 
 For questions, issues, or suggestions, please open an issue in this repository.
+
