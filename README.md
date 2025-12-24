@@ -2,12 +2,11 @@
 
 # Transformer–CNN for CRISPR Off-Target Prediction
 
-This repository implements a hybrid Transformer–CNN deep learning framework for predicting CRISPR–Cas9 off-target cleavage events.  
-The model integrates local mismatch-aware convolutional features with global contextual representations, and supports optional incorporation of pre-trained DNABERT embeddings.
+This repository implements a hybrid deep learning framework that integrates Transformer encoders and convolutional neural networks (CNNs) to predict CRISPR–Cas9 off-target cleavage events. The architecture is designed to capture both global contextual dependencies and local nucleotide mismatch patterns, improving generalization on experimentally validated datasets.
 
 ## Abstract
 
-Accurate prediction of CRISPR–Cas9 off-target activity is critical for safe genome editing. Existing convolutional neural network (CNN)–based approaches primarily capture local nucleotide mismatch patterns but fail to model long-range sequence dependencies. We propose a hybrid Transformer–CNN architecture that combines convolutional feature extraction with attention-based contextual modeling. Our framework optionally integrates pre-trained DNABERT embeddings to encode sgRNA sequence semantics. Experimental evaluation on proxy training data and the experimentally validated TrueOT benchmark demonstrates improved generalization compared to CNN-only baselines, particularly for high-mismatch off-target sites.
+Accurate prediction of CRISPR–Cas9 off-target activity is critical for safe and effective genome editing. Traditional CNN-based models capture local features but lack mechanisms for modeling long-range sequence dependencies. We introduce a Transformer–CNN hybrid model that leverages the strengths of both self-attention and convolutional operations to predict off-target effects from paired sgRNA–DNA sequences. Evaluation on the TrueOT benchmark shows improved generalization compared to CNN-only and Transformer-only baselines.
 
 ## Model Overview
 
@@ -28,21 +27,31 @@ Accurate prediction of CRISPR–Cas9 off-target activity is critical for safe ge
 
 ```
 
-├── src/
-│   ├── model.py        # Transformer–CNN architecture
-│   ├── dataset.py      # Dataset and sequence encoding
-│   ├── train.py        # Training pipeline
-│   ├── evaluate.py     # Evaluation on TrueOT
-│   └── utils.py        # Utilities and metrics
-│
+Transformer-CNN/
 ├── data/
-│   ├── raw/            # Not included (see Dataset section)
-│   └── processed/
+│ ├── raw/ # (not committed)
+│ └── processed/ 
+│ ├── encoding_info.json
+│ ├── proxy_train_encoded.npz
+│ ├── proxy_val_encoded.npz
+│ └── trueot_encoded.npz
 │
-├── results/
-│   ├── tables/
-│   └── plots/
+├── src/
+│ ├── model.py
+│ ├── dataset.py 
+│ ├── train.py
+│ ├── evaluate.py 
+│ ├── reproduce_results.py 
+│ └── utils.py
 │
+├── experiments/
+│ ├── cnn_baseline.yaml
+│ ├── transformer_only.yaml
+│ └── transformer_cnn.yaml      # Configuration files for reproducible experiments
+│
+├── results/ # Results (metrics, plots)
+├── models/ # Model checkpoints (links or placeholders)
+├── .gitignore
 └── README.md
 
 ````
@@ -62,6 +71,40 @@ Expected CSV columns:
 - `OT`
 - `label`
 
+## Preprocessing
+
+Preprocessing converts raw sequence pairs into one-hot encoded tensors.  
+Encoded representations are stored in `data/processed/` as compressed NumPy arrays (`*.npz`).
+
+Each encoded file contains:
+- `X`: array of shape (N, 4, 23) representing one-hot sequences
+- `y`: label vector of shape (N,)
+
+Metadata is stored in `encoding_info.json` for reproducibility.
+
+## Model Architecture
+
+<img width="9606" height="5160" alt="diagram" src="https://github.com/user-attachments/assets/e00cdc1d-dcf4-4acf-8346-6f0e9e18dcbf" />
+
+Figure (see paper) illustrates the full architecture:
+
+Input encoding: Paired sgRNA–DNA sequences, one-hot encoded (4 × 23)
+
+Transformer Encoder: Captures long-range contextual dependencies
+
+1D CNN Block: Extracts local mismatch features
+
+Feature Fusion: Concatenation of global and local features
+
+Fully Connected Layers: Dense prediction head with dropout
+
+Output: Sigmoid probability of off-target activity
+
+Ablation variants are supported:
+
+CNN-only: Remove Transformer branch
+
+Transformer-only: Remove CNN branch
 
 ## Training
 
@@ -108,8 +151,6 @@ Evaluation metrics:
 * Trained model checkpoints (`.pth`) are intentionally excluded from version control.
 * This repository focuses on reproducibility and clarity for research use.
 
-<img width="9606" height="5160" alt="diagram" src="https://github.com/user-attachments/assets/e00cdc1d-dcf4-4acf-8346-6f0e9e18dcbf" />
-
 ## License
 
 This project is released for academic and research use only.
@@ -130,5 +171,6 @@ To reproduce evaluation metrics and plots on TrueOT:
 
 ```bash
 python src/reproduce_results.py --config experiments/transformer_cnn.yaml
+
 
 
