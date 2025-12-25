@@ -1,46 +1,25 @@
 import torch
-import pandas as pd
 from torch.utils.data import DataLoader
-
-from model import Stage2Model
 from dataset import OffTargetDataset
-from utils import compute_metrics
+from model import CNNOnly, TransformerOnly, TransformerCNN
+from sklearn.metrics import roc_auc_score
+import pandas as pd
 
+def evaluate_model(path, model_class, df_path):
+    df = pd.read_csv(df_path)
+    ds = OffTargetDataset(df, device)
+    loader = DataLoader(ds, batch_size=32)
 
-def evaluate(trueot_csv, model_ckpt, sg_dim):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    df = pd.read_csv(trueot_csv)
-    all_gRNAs = df.gRNA.unique()
-    gRNA_to_idx = {g: i for i, g in enumerate(all_gRNAs)}
-    sg_embeddings = torch.zeros(len(all_gRNAs), sg_dim)
-
-    max_len = max(df.gRNA.str.len().max(), df.OT.str.len().max())
-
-    ds = OffTargetDataset(df, sg_embeddings, gRNA_to_idx, max_len)
-    loader = DataLoader(ds, batch_size=128)
-
-    model = Stage2Model(sg_dim).to(device)
-    model.load_state_dict(torch.load(model_ckpt))
+    model = model_class().to(device)
+    model.load_state_dict(torch.load(path))
     model.eval()
 
     preds, labels = [], []
     with torch.no_grad():
-        for batch in loader:
-            for k in batch:
-                batch[k] = batch[k].to(device)
-            out = torch.sigmoid(
-                model(
-                    batch["pair"],
-                    batch["mv"],
-                    batch["pam"],
-                    batch["sg_emb"]
-                )
-            )
-            preds.append(out.cpu())
-            labels.append(batch["label"].cpu())
+        for x, y in loader:
+            x, y = x.to(device), y.to(device)
+            logits = model(x).squeeze().cpu().numpy()
+            preds.extend(logits)
+            labels.extend(y.cpu().numpy())
 
-    preds = torch.cat(preds).numpy()
-    labels = torch.cat(labels).numpy()
-
-    return compute_metrics(labels, preds)
+    return roc_auc_score(labels, preds)
