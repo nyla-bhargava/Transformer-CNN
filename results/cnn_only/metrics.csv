@@ -1,0 +1,2 @@
+model,dataset,roc_auc
+CNN-only (DNABERT),TrueOT,0.4573
