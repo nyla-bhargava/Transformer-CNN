@@ -1,0 +1,11 @@
+model: CNN-only
+embedding: DNABERT-2-117M (frozen)
+pooling: masked mean pooling
+loss: BCEWithLogitsLoss (class-weighted)
+optimizer: Adam
+learning_rate: 1e-3
+epochs: 20
+batch_size: 32
+training_data: Proxy datasets
+evaluation_data: TrueOT
+notes: CNN-only ablation for hybrid model study
