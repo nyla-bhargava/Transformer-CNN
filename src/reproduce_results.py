@@ -1,66 +1,56 @@
-import argparse
-import os
-import yaml
+"""
+Reproduce Results for Transformer–CNN CRISPR Off-Target Prediction
+
+This script reproduces the main and ablation results reported in the paper.
+It evaluates pretrained models on the TrueOT benchmark.
+"""
+
 import torch
 import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.metrics import roc_auc_score, precision_recall_curve, auc
+from torch.utils.data import DataLoader
+from sklearn.metrics import roc_auc_score
 
-from model import build_model
-from dataset import load_trueot
-from utils import set_seed
+from dataset import OffTargetDataset
+from model import CNNOnly, TransformerOnly, TransformerCNN
 
-def evaluate(model, dataloader, device):
-    y_true, y_score = [], []
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+TRUEOT_CSV = "../data/processed/TrueOT_1806uniqueTriplet_gRNA_OT_label.csv"
+BATCH_SIZE = 32
+
+MODELS = {
+    "CNN-only (DNABERT)": {
+        "class": CNNOnly,
+        "ckpt": "../checkpoints/cnn_only.pt"
+    },
+    "Transformer-only (DNABERT)": {
+        "class": TransformerOnly,
+        "ckpt": "../checkpoints/transformer_only.pt"
+    },
+    "Transformer–CNN (ours)": {
+        "class": TransformerCNN,
+        "ckpt": "../checkpoints/transformer_cnn.pt"
+    }
+}
+
+def evaluate(model, loader):
     model.eval()
+    preds, labels = [], []
     with torch.no_grad():
-        for x, y in dataloader:
-            x = x.to(device)
-            preds = model(x).squeeze().cpu()
-            y_score.extend(preds.tolist())
-            y_true.extend(y.tolist())
-    return y_true, y_score
+        for x, y in loader:
+            x, y = x.to(DEVICE), y.to(DEVICE)
+            logits = model(x).squeeze()
+            preds.extend(torch.sigmoid(logits).cpu().numpy())
+            labels.extend(y.cpu().numpy())
+    return roc_auc_score(labels, preds)
 
-def main(config_path):
-    with open(config_path) as f:
-        cfg = yaml.safe_load(f)
+def main():
+    df = pd.read_csv(TRUEOT_CSV)
+    dataset = OffTargetDataset(df, DEVICE)
+    loader = DataLoader(dataset, batch_size=BATCH_SIZE)
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    set_seed(42)
+    results = []
 
-    model = build_model(cfg["model"]).to(device)
-    ckpt = torch.load(os.path.join(cfg["output"]["checkpoint_dir"], "best.pt"))
-    model.load_state_dict(ckpt)
-
-    dataloader = load_trueot(cfg["data"]["test_csv"])
-    y_true, y_score = evaluate(model, dataloader, device)
-
-    roc = roc_auc_score(y_true, y_score)
-    precision, recall, _ = precision_recall_curve(y_true, y_score)
-    pr = auc(recall, precision)
-
-    results_dir = cfg["output"]["results_dir"]
-    os.makedirs(results_dir, exist_ok=True)
-
-    # Save table
-    df = pd.DataFrame([{
-        "ROC_AUC": roc,
-        "PR_AUC": pr
-    }])
-    df.to_csv(os.path.join(results_dir, "metrics.csv"), index=False)
-
-    # ROC plot
-    plt.figure()
-    plt.plot(recall, precision)
-    plt.xlabel("Recall")
-    plt.ylabel("Precision")
-    plt.title("Precision–Recall Curve")
-    plt.savefig(os.path.join(results_dir, "pr_curve.png"))
-
-    print(f"ROC-AUC: {roc:.4f}, PR-AUC: {pr:.4f}")
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config", required=True)
-    args = parser.parse_args()
-    main(args.config)
+    for name, cfg in MODELS.items():
+        model = cfg["class"]().to(DEVICE)
+        model.load_state_dict(torch.load(cfg["ckpt]()
