@@ -1,0 +1,2 @@
+model,dataset,roc_auc
+Transformer-only (DNABERT),TrueOT,0.5487
