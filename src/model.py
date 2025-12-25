@@ -1,55 +1,41 @@
-import torch
 import torch.nn as nn
 
-
-class Stage2Model(nn.Module):
-    """
-    Transformer–CNN hybrid model for CRISPR off-target prediction
-    """
-
-    def __init__(self, sg_dim: int):
+class CNNOnly(nn.Module):
+    def __init__(self):
         super().__init__()
-
-        self.input_proj = nn.Linear(10, 128)
-
-        self.cnn = nn.Sequential(
-            nn.Conv1d(128, 128, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv1d(128, 128, kernel_size=3, padding=1),
-            nn.ReLU()
-        )
-
-        encoder_layer = nn.TransformerEncoderLayer(
-            d_model=128,
-            nhead=4,
-            batch_first=True
-        )
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=2)
-
-        self.sg_proj = nn.Linear(sg_dim, 128)
+        self.fc1 = nn.Linear(768, 256)
+        self.relu = nn.ReLU()
         self.dropout = nn.Dropout(0.3)
-        self.classifier = nn.Linear(256, 1)
+        self.fc2 = nn.Linear(256, 1)
 
-    def forward(self, pair, mv, pam, sg_emb):
-        """
-        pair : (B, L, 8)
-        mv   : (B, L)
-        pam  : (B, L)
-        sg_emb : (B, sg_dim)
-        """
-        x = torch.cat(
-            [pair, mv.unsqueeze(-1), pam.unsqueeze(-1)],
-            dim=-1
-        )  # (B, L, 10)
+    def forward(self, x):
+        x = self.relu(self.fc1(x))
+        x = self.dropout(x)
+        return self.fc2(x)
 
-        x = self.input_proj(x)
-        x = self.cnn(x.transpose(1, 2)).transpose(1, 2)
-        x = self.transformer(x)
 
-        pooled = x.mean(dim=1)
-        sg_feat = self.sg_proj(sg_emb)
+class TransformerOnly(nn.Module):
+    def __init__(self, d_model=768, heads=8, layers=2):
+        super().__init__()
+        enc_layer = nn.TransformerEncoderLayer(d_model, heads, dim_feedforward=1024)
+        self.transformer = nn.TransformerEncoder(enc_layer, layers)
+        self.fc = nn.Linear(d_model, 1)
 
-        fused = torch.cat([pooled, sg_feat], dim=1)
-        fused = self.dropout(fused)
+    def forward(self, x):
+        x = x.unsqueeze(1)
+        x = self.transformer(x).squeeze(1)
+        return self.fc(x)
 
-        return self.classifier(fused).squeeze(-1)
+
+class TransformerCNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.transformer = TransformerOnly()
+        self.cnn = CNNOnly()
+        # NOTE: fuse transformer + CNN as in your original architecture
+
+    def forward(self, x):
+        t_out = self.transformer(x)
+        c_out = self.cnn(x)
+        combined = torch.cat([t_out, c_out], dim=-1)
+        return combined
