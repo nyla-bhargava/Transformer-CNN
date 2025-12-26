@@ -1,7 +1,4 @@
-torch
-transformers
-scikit-learn
-numpy
-pandas
-einops
-matplotlib
+torch==1.13.1
+transformers==4.x.x
+scikit-learn==1.2.1
+pandas==1.5.3
