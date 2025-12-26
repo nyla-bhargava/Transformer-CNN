@@ -147,6 +147,18 @@ Ablation Variants:
 
 - CNN-only: Transformer branch removed
 - Transformer-only: CNN branch removed
+
+### Ablation Implementation
+
+CNN-only and Transformer-only baselines are implemented by selectively
+disabling architectural components within `model.py`.
+
+- CNN-only: Transformer encoder disabled
+- Transformer-only: CNN branch disabled
+- Hybrid: Both branches enabled
+
+Model variants are selected via configuration flags passed to `train.py`
+and are executed sequentially in `reproduce_results.py`.
 ## 
 **Evaluation Metric**
 
@@ -195,6 +207,7 @@ If you use this work, please cite:
 ```bash
 @article
 ````
+
 
 
 
