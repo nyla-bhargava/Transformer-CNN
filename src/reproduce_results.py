@@ -1,8 +1,8 @@
 """
-Reproduce Results for Transformer–CNN CRISPR Off-Target Prediction
+Reproduce Ablation Results (Table 2)
 
-This script reproduces the main and ablation results reported in the paper.
-It evaluates pretrained models on the TrueOT benchmark.
+This script reproduces the ablation study results reported in the paper:
+CNN-only, Transformer-only, and Transformer–CNN models evaluated on TrueOT.
 """
 
 import torch
@@ -14,43 +14,53 @@ from dataset import OffTargetDataset
 from model import CNNOnly, TransformerOnly, TransformerCNN
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 TRUEOT_CSV = "../data/processed/TrueOT_1806uniqueTriplet_gRNA_OT_label.csv"
 BATCH_SIZE = 32
 
-MODELS = {
-    "CNN-only (DNABERT)": {
-        "class": CNNOnly,
-        "ckpt": "../checkpoints/cnn_only.pt"
-    },
-    "Transformer-only (DNABERT)": {
-        "class": TransformerOnly,
-        "ckpt": "../checkpoints/transformer_only.pt"
-    },
-    "Transformer–CNN (ours)": {
-        "class": TransformerCNN,
-        "ckpt": "../checkpoints/transformer_cnn.pt"
-    }
-}
+MODELS = [
+    ("CNN-only (DNABERT)", CNNOnly, "../checkpoints/cnn_only.pt"),
+    ("Transformer-only (DNABERT)", TransformerOnly, "../checkpoints/transformer_only.pt"),
+    ("Transformer–CNN (ours)", TransformerCNN, "../checkpoints/transformer_cnn.pt"),
+]
 
 def evaluate(model, loader):
     model.eval()
-    preds, labels = [], []
+    y_true, y_pred = [], []
     with torch.no_grad():
         for x, y in loader:
             x, y = x.to(DEVICE), y.to(DEVICE)
             logits = model(x).squeeze()
-            preds.extend(torch.sigmoid(logits).cpu().numpy())
-            labels.extend(y.cpu().numpy())
-    return roc_auc_score(labels, preds)
+            probs = torch.sigmoid(logits)
+            y_pred.extend(probs.cpu().numpy())
+            y_true.extend(y.cpu().numpy())
+    return roc_auc_score(y_true, y_pred)
 
 def main():
     df = pd.read_csv(TRUEOT_CSV)
     dataset = OffTargetDataset(df, DEVICE)
     loader = DataLoader(dataset, batch_size=BATCH_SIZE)
 
-    results = []
+    rows = []
 
-    for name, cfg in MODELS.items():
-        model = cfg["class"]().to(DEVICE)
-        model.load_state_dict(torch.load(cfg["ckpt]()
+    for name, model_cls, ckpt in MODELS:
+        model = model_cls().to(DEVICE)
+        model.load_state_dict(torch.load(ckpt, map_location=DEVICE))
+        auc = evaluate(model, loader)
+
+        rows.append({
+            "Model": name,
+            "Architecture": name.split("(")[0].strip(),
+            "Dataset": "TrueOT",
+            "ROC-AUC": round(auc, 4)
+        })
+
+        print(f"{name}: ROC-AUC = {auc:.4f}")
+
+    results = pd.DataFrame(rows)
+    results.to_csv("../results/ablation_trueot.csv", index=False)
+
+    print("\nAblation Study (Table 2):")
+    print(results)
+
+if __name__ == "__main__":
+    main()
