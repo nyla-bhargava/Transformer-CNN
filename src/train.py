@@ -1,13 +1,13 @@
 import torch
+from utils import set_seed
+
+set_seed(42)
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from dataset import OffTargetDataset
 from model import CNNOnly, TransformerOnly, TransformerCNN
 from utils import compute_metrics
 import pandas as pd
-from utils import set_seed
-
-set_seed(42)
 
 def train_model(config):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
