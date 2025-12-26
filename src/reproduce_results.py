@@ -4,7 +4,9 @@ Reproduce Ablation Results (Table 2)
 This script reproduces the ablation study results reported in the paper:
 CNN-only, Transformer-only, and Transformer–CNN models evaluated on TrueOT.
 """
+from utils import set_seed
 
+set_seed(42)
 import torch
 import pandas as pd
 from torch.utils.data import DataLoader
