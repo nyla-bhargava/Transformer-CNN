@@ -64,16 +64,11 @@ To reproduce results, place the following files in `data/processed/`:
 
 File paths are expected exactly as referenced in the scripts.
 
-## Dataset
-
 This work uses publicly available CRISPR off-target datasets:
 
 - **Proxy training dataset**: Used for model training and validation  
 - **TrueOT dataset**: Experimentally validated benchmark for generalization evaluation
-
-Due to licensing and size constraints, raw datasets are **not included** in this repository.  
-Please place the CSV files in `data/raw/` before training.
-
+- 
 Expected CSV columns:
 - `gRNA`
 - `OT`
@@ -189,6 +184,7 @@ To reproduce evaluation metrics and plots on TrueOT:
 
 ```bash
 python src/reproduce_results.py --config experiments/transformer_cnn.yaml
+
 
 
 
