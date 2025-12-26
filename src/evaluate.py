@@ -1,3 +1,5 @@
+from utils import set_seed
+set_seed(42)
 import torch
 from torch.utils.data import DataLoader
 from dataset import OffTargetDataset
