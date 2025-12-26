@@ -29,7 +29,6 @@ Accurate prediction of CRISPR–Cas9 off-target activity is critical for safe an
 
 Transformer-CNN/
 ├── data/
-│ ├── raw/ # (not committed)
 │ └── processed/ 
 │ ├── encoding_info.json
 │ ├── proxy_train_encoded.npz
@@ -55,6 +54,15 @@ Transformer-CNN/
 └── README.md
 
 ````
+## Data Availability
+Due to licensing restrictions, datasets are not included in this repository.
+
+To reproduce results, place the following files in `data/processed/`:
+- Proxy_TrainCV.csv
+- Proxy_Validation.csv
+- TrueOT_1806uniqueTriplet_gRNA_OT_label.csv
+
+File paths are expected exactly as referenced in the scripts.
 
 ## Dataset
 
@@ -181,6 +189,7 @@ To reproduce evaluation metrics and plots on TrueOT:
 
 ```bash
 python src/reproduce_results.py --config experiments/transformer_cnn.yaml
+
 
 
 
